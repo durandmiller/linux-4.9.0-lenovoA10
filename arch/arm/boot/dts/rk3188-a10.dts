@@ -1,0 +1,488 @@
+/*
+ * Copyright (c) 2016 Durand Miller <durand.miller@southpatron.com>
+ *
+ * Based on rk3188-radxarock.dts
+ *
+ * This file is dual-licensed: you can use it either under the terms
+ * of the GPL or the X11 license, at your option. Note that this dual
+ * licensing only applies to this file, and not this project as a
+ * whole.
+ *
+ *  a) This file is free software; you can redistribute it and/or
+ *     modify it under the terms of the GNU General Public License as
+ *     published by the Free Software Foundation; either version 2 of the
+ *     License, or (at your option) any later version.
+ *
+ *     This file is distributed in the hope that it will be useful,
+ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *     GNU General Public License for more details.
+ *
+ * Or, alternatively,
+ *
+ *  b) Permission is hereby granted, free of charge, to any person
+ *     obtaining a copy of this software and associated documentation
+ *     files (the "Software"), to deal in the Software without
+ *     restriction, including without limitation the rights to use,
+ *     copy, modify, merge, publish, distribute, sublicense, and/or
+ *     sell copies of the Software, and to permit persons to whom the
+ *     Software is furnished to do so, subject to the following
+ *     conditions:
+ *
+ *     The above copyright notice and this permission notice shall be
+ *     included in all copies or substantial portions of the Software.
+ *
+ *     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ *     EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ *     OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ *     NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ *     HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ *     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ *     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ *     OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+/dts-v1/;
+#include <dt-bindings/input/input.h>
+#include "rk3188.dtsi"
+
+/ {
+	model = "Lenovo A10";
+	compatible = "lenovo,a10", "rockchip,rk3188";
+
+	memory {
+		device_type = "memory";
+		reg = <0x60000000 0x80000000>;
+	};
+
+	gpio-keys {
+		compatible = "gpio-keys";
+		autorepeat;
+
+		power {
+			gpios = <&gpio0 4 GPIO_ACTIVE_LOW>;
+			linux,code = <KEY_POWER>;
+			label = "GPIO Key Power";
+			linux,input-type = <1>;
+			wakeup-source;
+			debounce-interval = <100>;
+		};
+	};
+
+	vcc_otg: usb-otg-regulator {
+		compatible = "regulator-fixed";
+		enable-active-high;
+		gpio = <&gpio2 31 GPIO_ACTIVE_HIGH>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&otg_vbus_drv>;
+		regulator-name = "otg-vbus";
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+		regulator-always-on;
+		regulator-boot-on;
+	};
+
+	vcc_sd0: sdmmc-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "sdmmc-supply";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		gpio = <&gpio3 1 GPIO_ACTIVE_LOW>;
+		startup-delay-us = <100000>;
+		vin-supply = <&vcc_io>;
+	};
+
+	vcc_host: usb-host-regulator {
+		compatible = "regulator-fixed";
+		enable-active-high;
+		gpio = <&gpio0 3 GPIO_ACTIVE_HIGH>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&host_vbus_drv>;
+		regulator-name = "host-pwr";
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+		regulator-always-on;
+		regulator-boot-on;
+	};
+
+	vsys: vsys-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "vsys";
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+		regulator-boot-on;
+	};
+};
+
+&emac {
+	status = "okay";
+
+	pinctrl-names = "default";
+	pinctrl-0 = <&emac_xfer>, <&emac_mdio>, <&phy_int>;
+
+	phy = <&phy0>;
+	phy-supply = <&vcc_rmii>;
+
+	phy0: ethernet-phy@0 {
+		reg = <0>;
+		interrupt-parent = <&gpio3>;
+		interrupts = <26 IRQ_TYPE_LEVEL_LOW>;
+	};
+};
+
+&cpu0 {
+	cpu0-supply = <&vdd_arm>;
+};
+
+
+&i2c0 {
+	status = "okay";
+	clock-frequency = <400000>;
+
+	angle_kxtik: angle_kxtik@0f {
+		compatible = "haoyu,hym8563";
+		reg = <0x0f>;
+		interrupt-parent = <&gpio0>;
+		interrupts = <13 IRQ_TYPE_EDGE_FALLING>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&rtc_int>;
+		#clock-cells = <0>;
+		clock-output-names = "xin32k";
+		polling-delay = <30>
+	};
+
+	angle_lis3dh: angle_lis3dh@19 {
+		compatible = "haoyu,hym8563";
+		reg = <0x19>;
+		interrupt-parent = <&gpio0>;
+		interrupts = <13 IRQ_TYPE_EDGE_FALLING>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&rtc_int>;
+		#clock-cells = <0>;
+		clock-output-names = "xin32k";
+		polling-delay = <30>
+	};
+
+	gs_kxtik: gs_kxtik@0f {
+		compatible = "haoyu,hym8563";
+		reg = <0x0e>;
+		interrupt-parent = <&gpio0>;
+		interrupts = <13 IRQ_TYPE_EDGE_FALLING>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&rtc_int>;
+		#clock-cells = <0>;
+		clock-output-names = "xin32k";
+		polling-delay = <30>
+	};
+
+	gs_lis3dh: gs_lis3dh@19 {
+		compatible = "haoyu,hym8563";
+		reg = <0x18>;
+		interrupt-parent = <&gpio0>;
+		interrupts = <13 IRQ_TYPE_EDGE_FALLING>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&rtc_int>;
+		#clock-cells = <0>;
+		clock-output-names = "xin32k";
+		polling-delay = <30>
+	};
+
+};
+
+
+
+&i2c1 {
+	status = "okay";
+	clock-frequency = <400000>;
+
+	rtc@51 {
+		compatible = "haoyu,hym8563";
+		reg = <0x51>;
+		interrupt-parent = <&gpio0>;
+		interrupts = <13 IRQ_TYPE_EDGE_FALLING>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&rtc_int>;
+		#clock-cells = <0>;
+		clock-output-names = "xin32k";
+	};
+
+	act8846: act8846@5a {
+		compatible = "active-semi,act8846";
+		reg = <0x5a>;
+		status = "okay";
+		system-power-controller;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&act8846_dvs0_ctl>;
+
+		vp1-supply = <&vsys>;
+		vp2-supply = <&vsys>;
+		vp3-supply = <&vsys>;
+		vp4-supply = <&vsys>;
+		inl1-supply = <&vcc_io>;
+		inl2-supply = <&vsys>;
+		inl3-supply = <&vsys>;
+
+		regulators {
+			vcc_ddr: REG1 {
+				regulator-name = "VCC_DDR";
+				regulator-min-microvolt = <1200000>;
+				regulator-max-microvolt = <1200000>;
+				regulator-suspend-microvolt = <1200000>;
+				regulator-always-on;
+			};
+
+			vdd_log: REG2 {
+				regulator-name = "VDD_LOG";
+				regulator-min-microvolt = <1000000>;
+				regulator-max-microvolt = <1000000>;
+				regulator-suspend-microvolt = <1200000>;
+				regulator-always-on;
+			};
+
+			vdd_arm: REG3 {
+				regulator-name = "VDD_ARM";
+				regulator-min-microvolt = <875000>;
+				regulator-max-microvolt = <1350000>;
+				regulator-suspend-microvolt = <1200000>;
+				regulator-always-on;
+			};
+
+			vcc_io: REG4 {
+				regulator-name = "VCC_IO";
+				regulator-min-microvolt = <3000000>;
+				regulator-max-microvolt = <3000000>;
+				regulator-suspend-microvolt = <3000000>;
+				regulator-always-on;
+			};
+
+			vdd_10: REG5 {
+				regulator-name = "VDD_10";
+				regulator-min-microvolt = <1000000>;
+				regulator-max-microvolt = <1000000>;
+			};
+
+			vdd_12: REG6 {
+				regulator-name = "VDD_12";
+				regulator-min-microvolt = <1200000>;
+				regulator-max-microvolt = <1200000>;
+			};
+
+			vcc_18cif: REG7 {
+				regulator-name = "VCC_18CIF";
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <1800000>;
+			};
+
+			vcc_a33: REG8 {
+				regulator-name = "VCC_A33";
+				regulator-min-microvolt = <3300000>;
+				regulator-max-microvolt = <3300000>;
+			};
+
+			vcc_tp: REG9 {
+				regulator-name = "VCC_TP";
+				regulator-min-microvolt = <3300000>;
+				regulator-max-microvolt = <3300000>;
+			};
+
+			vcc_jetta: REG10 {
+				regulator-name = "VCC_JETTA";
+				regulator-min-microvolt = <3300000>;
+				regulator-max-microvolt = <3300000>;
+			};
+
+			vcc_18: REG11 {
+				regulator-name = "VCC_18";
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <1800000>;
+			};
+
+			vcc_12hsic: REG12 {
+				regulator-name = "VCC_12HSIC";
+				regulator-min-microvolt = <1200000>;
+				regulator-max-microvolt = <1200000>;
+			};
+
+			vcc_18rtc: REG13 {
+				regulator-name = "VCC_18RTC";
+				regulator-min-microvolt = <1800000>;
+				regulator-max-microvolt = <1800000>;
+			};
+		};
+	};
+};
+
+
+&i2c2 {
+	status = "okay";
+	clock-frequency = <400000>;
+
+	cat66121_hdmi: cat66121_hdmi@4c {
+		compatible = "active-semi,act8846";
+		reg = <0x4c>;
+		status = "okay";
+	};
+
+	lcd_edid_i2c: lcd_edid_i2c@50 {
+		compatible = "active-semi,act8846";
+		reg = <0x50>;
+		status = "okay";
+	};
+
+	elan_ktf2k: elan_ktf2k@10 {
+		compatible = "active-semi,act8846";
+		reg = <0x10>;
+		status = "okay";
+	};
+};
+
+&i2c3 {
+	status = "okay";
+	clock-frequency = <400000>;
+
+	blueberry_kb: blueberry_kb@61 {
+		compatible = "active-semi,act8846";
+		reg = <0x61>;
+		status = "okay";
+	};
+
+	blueberry_bat: blueberry_bat@62 {
+		compatible = "active-semi,act8846";
+		reg = <0x62>;
+		status = "okay";
+	};
+};
+
+&i2c4 {
+	status = "okay";
+	clock-frequency = <400000>;
+
+	blueberry_tp: blueberry_kb@63 {
+		compatible = "active-semi,act8846";
+		reg = <0x63>;
+		status = "okay";
+	};
+
+	rt3261: rt3261@1c {
+		compatible = "active-semi,act8846";
+		reg = <0x1c>;
+		status = "okay";
+	};
+
+	rt5460: rt5460@1c {
+		compatible = "active-semi,act8846";
+		reg = <0x1c>;
+		status = "okay";
+	};
+
+	usb4604: usb4606@2d{
+		compatible = "active-semi,act8846";
+		reg = <0x2d>;
+		status = "okay";
+	};
+};
+
+
+
+
+
+&mmc0 {
+	num-slots = <1>;
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&sd0_clk>, <&sd0_cmd>, <&sd0_cd>, <&sd0_bus4>;
+	vmmc-supply = <&vcc_sd0>;
+
+	bus-width = <4>;
+	cap-mmc-highspeed;
+	cap-sd-highspeed;
+	disable-wp;
+};
+
+&pwm1 {
+	status = "okay";
+};
+
+&pwm2 {
+	status = "okay";
+};
+
+&pwm3 {
+	status = "okay";
+};
+
+&pinctrl {
+	pcfg_output_low: pcfg-output-low {
+		output-low;
+	};
+
+	act8846 {
+		act8846_dvs0_ctl: act8846-dvs0-ctl {
+			rockchip,pins = <RK_GPIO3 27 RK_FUNC_GPIO &pcfg_output_low>;
+		};
+	};
+
+	hym8563 {
+		rtc_int: rtc-int {
+			rockchip,pins = <RK_GPIO0 0 RK_FUNC_GPIO &pcfg_pull_up>;
+		};
+	};
+
+	lan8720a  {
+		phy_int: phy-int {
+			rockchip,pins = <RK_GPIO3 26 RK_FUNC_GPIO &pcfg_pull_up>;
+		};
+	};
+
+	ir-receiver {
+		ir_recv_pin: ir-recv-pin {
+			rockchip,pins = <RK_GPIO0 10 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
+
+	usb {
+		host_vbus_drv: host-vbus-drv {
+			rockchip,pins = <0 3 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+		otg_vbus_drv: otg-vbus-drv {
+			rockchip,pins = <2 31 RK_FUNC_GPIO &pcfg_pull_none>;
+		};
+	};
+};
+
+&spdif {
+	status = "okay";
+};
+
+&uart0 {
+	status = "okay";
+};
+
+&uart1 {
+	status = "okay";
+};
+
+&uart2 {
+	status = "okay";
+};
+
+&uart3 {
+	status = "okay";
+};
+
+&usbphy {
+	status = "okay";
+};
+
+&usb_host {
+	status = "okay";
+};
+
+&usb_otg {
+	status = "okay";
+};
+
+&wdt {
+	status = "okay";
+};
